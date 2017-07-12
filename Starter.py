@@ -19,7 +19,7 @@ class Form(wx.Panel):
         self.referrerComboBox = wx.ComboBox(self, choices=self.referrers,
             style=wx.CB_DROPDOWN)
         self.insuranceCheckBox = wx.CheckBox(self,
-            label="Do you wnat Insured Shipment?")
+            label="Do you want Insured Shipment?")
         self.colorRadioBox = wx.RadioBox(self,
             label="What color woud you like?",
             choices=self.colors, majorDimension=3, style=wx.RA_SPECIFY_COLS)
@@ -75,7 +75,8 @@ class FormWithAbsolutePositioning(Form):
              (self.insuranceCheckBox, 20, 180, -1, -1),
              (self.colorRadioBox, 20, 210, -1, -1),
              (self.saveButton, 200, 300, -1, -1)]:
-            control.SetDimensions(x=x,y=y,width=width,height=height)
+            control.SetSize(x=x,y=y,width=width,height=height)
+            
 
 class FormWithSizer(Form):
     def doLayout(self):
