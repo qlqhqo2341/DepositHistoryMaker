@@ -1,21 +1,28 @@
+# -*- coding:utf-8 -*-
 from UI import MainForm
 import wx
 
-dhData = {}
-activityData = []
-undoCount=0
-is_tracing = False
-history_size = 6
-file_path = None
+dhData, file_path = {}, None
+is_tracing, is_saved = False, False
+activityData , undoCount, history_size = [], 0, 6
+
+def init():
+    global dhData, file_path, is_tracing, is_saved
+    global activityData, undoCount, history_size
+    dhData, file_path = {}, None
+    is_tracing, is_saved = False, False
+    activityData , undoCount, history_size = [], 0, 6
 
 def tracingOn():
     '''
     If tracing on (use add or modify) after undo
     Need to remove activityData behind undoCount data
     '''
+    global undoCount
     if undoCount > 0:
-        # TODO : make function!
-        pass
+        for i in range(undoCount):
+            activityData.pop(-1)
+        undoCount=0
     is_tracing = True
 
 def acitivityWriter(func):
