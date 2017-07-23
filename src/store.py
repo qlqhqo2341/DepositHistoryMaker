@@ -51,9 +51,14 @@ def modify(prev, next):
     pass
     
 
-def dialogSave(): # call dialog and saving
+def dialogNotSaving(Frame):# call dialog for closing after not saved
+    dialog = wx.MessageDialog(Frame, 'hohoh', style=wx.YES_NO|wx.CANCEL)
+    r = dialog.ShowModal()
+    return r
+
+def dialogSave(Frame): # call dialog and saving
     pass
-def dialogLoad(): # call dialog and loading
+def dialogLoad(Frame): # call dialog and loading
     pass
 
 def save(path):

@@ -13,7 +13,7 @@ class StartForm(wx.Frame):
         self.doLayout()
 
     def newFile(self,evt):
-        self.main.newFile()
+        self.main.newFile(None)
         self.main.Show()
         self.Hide()
 
@@ -46,7 +46,10 @@ class MainForm(wx.Frame):
         self.doLayout()
         self.firstForm.Show()
 
-    def newFile(self, path=None):
+    def newFile(self, evt):
+        if evt!=None and store.is_saved==False:
+            if store.dialogNotSaving(self) == wx.ID_CANCEL:
+                return
         store.init()
         self.refresh()
 
@@ -57,7 +60,9 @@ class MainForm(wx.Frame):
         # TODO : according to widget. setting data    
 
     def closing(self, evt):
-        
+        if not store.is_saved:
+            if store.dialogNotSaving(self) == wx.ID_CANCEL:
+                return
         self.Hide()
         self.firstForm.Show()
 
@@ -70,29 +75,40 @@ class MainForm(wx.Frame):
         for ind,name in enumerate(['날짜','행사','내용','수입',
         '지출']):
             self.sheet.SetColLabelValue(ind,name)
+        self.sheet.SetRowLabelSize(0)
+        self.sheet.EnableEditing(False)
+        self.sheet.DisableDragGridSize()
 
-                            
+        self.butNew = wx.Button(self, label="새 파일")
+        self.butLoad = wx.Button(self, label="불러오기")
+        self.butSave = wx.Button(self,label="저장하기")
+        self.butAdd = wx.Button(self,label="내용 추가")
+        self.butDel = wx.Button(self,label="삭제")
+        self.butMod = wx.Button(self,label="수정")
+        self.butUndo = wx.Button(self,label="되돌리기")
+        self.butRedo = wx.Button(self,label="다시실행")
+        self.butPrint = wx.Button(self,label="프린트")
         self.buttons = [
-            ( wx.Button(self, label="새 파일"),
-            wx.Button(self, label="불러오기")),
-            wx.Button(self,label="저장하기"),
-            wx.Button(self,label="내용 추가"),
-            ( wx.Button(self, label="삭제"),
-            wx.Button(self, label="수정")),
-            ( wx.Button(self, label="되돌리기"),
-            wx.Button(self, label="다시실행")),
-            wx.Button(self, label="프린트")
+            (self.butNew, self.butLoad),
+            self.butSave,self.butAdd,
+            (self.butDel,self.butMod),
+            (self.butUndo,self.butRedo),
+            self.butPrint
         ]
+
 
         self.checks = []
         for i in self.sums:
             self.checks.append(wx.CheckBox(self,label=i))
 
     def bindEvents(self):
-        buttonEvents = {
-            "새 파일":(wx.EVT_BUTTON,None)
-        }
-        self.Bind(wx.EVT_CLOSE,self.closing)     
+        evts = [
+            (self.butNew, wx.EVT_BUTTON, self.newFile)
+        ]
+        for but, evt, func in evts:
+            but.Bind(evt,func)
+        
+        self.Bind(wx.EVT_CLOSE,self.closing)
 
     def doLayout(self):
         self.divider = wx.BoxSizer()
