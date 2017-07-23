@@ -5,13 +5,16 @@ import wx
 dhData, file_path = {}, None
 is_tracing, is_saved = False, False
 activityData , undoCount, history_size = [], 0, 6
+mainForm = None
 
-def init():
+def init(Frame):
     global dhData, file_path, is_tracing, is_saved
     global activityData, undoCount, history_size
+    global mainForm
     dhData, file_path = {}, None
     is_tracing, is_saved = False, False
     activityData , undoCount, history_size = [], 0, 6
+    mainForm = Frame
 
 def tracingOn():
     '''
@@ -51,14 +54,14 @@ def modify(prev, next):
     pass
     
 
-def dialogNotSaving(Frame):# call dialog for closing after not saved
-    dialog = wx.MessageDialog(Frame, 'hohoh', style=wx.YES_NO|wx.CANCEL)
+def dialogNotSaving():# call dialog for closing after not saved
+    dialog = wx.MessageDialog(mainForm, 'hohoh', style=wx.YES_NO|wx.CANCEL)
     r = dialog.ShowModal()
     return r
 
-def dialogSave(Frame): # call dialog and saving
+def dialogSave(): # call dialog and saving
     pass
-def dialogLoad(Frame): # call dialog and loading
+def dialogLoad(): # call dialog and loading
     pass
 
 def save(path):

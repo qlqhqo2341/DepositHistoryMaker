@@ -13,7 +13,7 @@ class StartForm(wx.Frame):
         self.doLayout()
 
     def newFile(self,evt):
-        self.main.newFile(None)
+        self.main.onNewFile(None)
         self.main.Show()
         self.Hide()
 
@@ -46,25 +46,35 @@ class MainForm(wx.Frame):
         self.doLayout()
         self.firstForm.Show()
 
-    def newFile(self, evt):
-        if evt!=None and store.is_saved==False:
-            if store.dialogNotSaving(self) == wx.ID_CANCEL:
-                return
-        store.init()
-        self.refresh()
-
     def refresh(self):
         data = store.dhData
         history_size, undoCount = store.history_size, store.undoCount
 
-        # TODO : according to widget. setting data    
+        # TODO : according to widget. setting data  
 
-    def closing(self, evt):
+    #event Methods
+    def onNewFile(self, evt):
+        if evt!=None and store.is_saved==False:
+            if store.dialogNotSaving() == wx.ID_CANCEL:
+                return
+        store.init(self)
+        self.refresh()
+
+    def onClose(self, evt):
         if not store.is_saved:
-            if store.dialogNotSaving(self) == wx.ID_CANCEL:
+            if store.dialogNotSaving() == wx.ID_CANCEL:
                 return
         self.Hide()
         self.firstForm.Show()
+
+    def onDateSum(self, evt):
+        pass
+
+    def onFestivalSum(self, evt):
+        pass
+
+    def onTotalSum(self, evt):
+        pass
 
     #widgets
     def createControl(self):
@@ -103,12 +113,12 @@ class MainForm(wx.Frame):
 
     def bindEvents(self):
         evts = [
-            (self.butNew, wx.EVT_BUTTON, self.newFile)
+            (self.butNew, wx.EVT_BUTTON, self.onNewFile)
         ]
         for but, evt, func in evts:
             but.Bind(evt,func)
         
-        self.Bind(wx.EVT_CLOSE,self.closing)
+        self.Bind(wx.EVT_CLOSE,self.onClose)
 
     def doLayout(self):
         self.divider = wx.BoxSizer()
