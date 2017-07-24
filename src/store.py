@@ -3,7 +3,7 @@ from UI import MainForm
 import wx
 
 dhData, file_path = {}, None
-is_tracing, is_saved = False, False
+is_tracing, is_saved = False, True
 activityData , undoCount, history_size = [], 0, 6
 mainForm = None
 
@@ -12,9 +12,10 @@ def init(Frame):
     global activityData, undoCount, history_size
     global mainForm
     dhData, file_path = {}, None
-    is_tracing, is_saved = False, False
+    is_tracing, is_saved = False, True
     activityData , undoCount, history_size = [], 0, 6
     mainForm = Frame
+    mainForm.refresh()
 
 def tracingOn():
     '''
@@ -59,12 +60,27 @@ def dialogNotSaving():# call dialog for closing after not saved
     r = dialog.ShowModal()
     return r
 
-def dialogSave(): # call dialog and saving
-    pass
-def dialogLoad(): # call dialog and loading
-    pass
+def dialogSave(evt=None): # call dialog and saving
+    dialog = wx.FileDialog(None, "Save File", "","","DH Files (*.dh)|*.dh",
+     wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+    if dialog.ShowModal() == wx.ID_CANCEL:
+        return
+    
+    mainForm.SetTitle("FIle : "+dialog.GetPath())
+    save(dialog.GetPath())
+
+def dialogLoad(evt=None): # call dialog and loading
+    dialog = wx.FileDialog(None, "Open FIle","","","DH Files (*.dh)|*.dh",
+     wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+
+    if dialog.ShowModal() == wx.ID_CANCEL:
+        return
+
+    mainForm.SetTitle("FIle : "+dialog.GetPath())
+    load(dialog.GetPath())
 
 def save(path):
+    is_saved = True
     with open(path, 'wt') as f:
         for ref in dhData:
             val = dhData[ref]
@@ -77,8 +93,9 @@ def load(path):
         for str in f:
             r = [t.strip() for t in str.split(',')]
 
-        # TODO: need to check right type
-        dhData[(r[0],r[1],r[2])]=int(r[3])      
+            # TODO: need to check right type
+            dhData[(r[0],r[1],r[2])]=int(r[3])      
+    mainForm.refresh()
 
 if __name__ == '__main__':
     app = wx.App(0)

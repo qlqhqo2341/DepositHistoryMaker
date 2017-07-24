@@ -13,14 +13,14 @@ class StartForm(wx.Frame):
         self.doLayout()
 
     def newFile(self,evt):
-        self.main.onNewFile(None)
+        store.init(self.main)
         self.main.Show()
         self.Hide()
 
     def load(self,evt):
-        store.dialogLoad()
-        self.main.Show()
         self.Hide()
+        self.main.Show()
+        store.dialogLoad()
 
     #Widgets
     def createControl(self):
@@ -30,6 +30,7 @@ class StartForm(wx.Frame):
 
     def bindEvents(self):
         self.NewFileButton.Bind(wx.EVT_BUTTON, self.newFile)
+        self.LoadButton.Bind(wx.EVT_BUTTON, self.load)
 
     def doLayout(self):
         box = wx.BoxSizer()
@@ -46,35 +47,53 @@ class MainForm(wx.Frame):
         self.doLayout()
         self.firstForm.Show()
 
+        store.init(self)
+
     def refresh(self):
         data = store.dhData
         history_size, undoCount = store.history_size, store.undoCount
-
-        # TODO : according to widget. setting data  
+        sheet=self.sheet
+        # TODO : check combobox. make the right summation and SORT
+        
+        sheet.ClearGrid()
+        for ind, tup in enumerate(data):
+            for ind2,val in enumerate(tup):
+                sheet.SetCellValue(ind, ind2, val)
+            val = data[tup]
+            val = (str(val),"0") if val>0 else ("0", str(-val))
+            for ind2,v in enumerate(val):
+                sheet.SetCellValue(ind,ind2+3,v)
+            
 
     #event Methods
+    def onLoad(self, evt):
+        store.init()
+        store.dialogLoad()
+
+    def onSave(self, evt):
+        store.dialogSave()
+    
     def onNewFile(self, evt):
         if evt!=None and store.is_saved==False:
             if store.dialogNotSaving() == wx.ID_CANCEL:
                 return
         store.init(self)
+        self.SetTitle("입출금내역 작성기")
         self.refresh()
 
     def onClose(self, evt):
         if not store.is_saved:
-            if store.dialogNotSaving() == wx.ID_CANCEL:
+            r = store.dialogNotSaving() 
+            if r== wx.ID_CANCEL:
                 return
+            elif r == wx.ID_OK:
+                store.dialogSave()
         self.Hide()
         self.firstForm.Show()
 
-    def onDateSum(self, evt):
-        pass
-
-    def onFestivalSum(self, evt):
-        pass
-
-    def onTotalSum(self, evt):
-        pass
+    def onCheckSum(self, evt):
+        self.refresh()
+        
 
     #widgets
     def createControl(self):
@@ -113,12 +132,17 @@ class MainForm(wx.Frame):
 
     def bindEvents(self):
         evts = [
-            (self.butNew, wx.EVT_BUTTON, self.onNewFile)
+            (self, wx.EVT_CLOSE,self.onClose),
+            (self.butNew, wx.EVT_BUTTON, self.onNewFile),
+            (self.butSave, wx.EVT_BUTTON, store.dialogSave),
+            (self.butLoad, wx.EVT_BUTTON, store.dialogLoad)
         ]
-        for but, evt, func in evts:
-            but.Bind(evt,func)
+        for control, evt, func in evts:
+            control.Bind(evt,func)
+
+        for checkbox in self.checks:
+            checkbox.Bind(wx.EVT_CHECKBOX,self.onCheckSum)
         
-        self.Bind(wx.EVT_CLOSE,self.onClose)
 
     def doLayout(self):
         self.divider = wx.BoxSizer()
@@ -144,6 +168,6 @@ class MainForm(wx.Frame):
 # UI Test Code!
 if __name__ == "__main__":
     app = wx.App(0)
-    main = MainForm(None, -1, "Hi!")
+    main = MainForm(None, -1, "입출금내역 작성기")
     app.MainLoop()
     
