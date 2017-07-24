@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-from UI import MainForm
 import wx
 
 dhData, file_path = {}, None
@@ -89,6 +88,7 @@ def save(path):
                                    
     
 def load(path):
+    init(mainForm)
     with open(path) as f:
         for str in f:
             r = [t.strip() for t in str.split(',')]
@@ -96,9 +96,3 @@ def load(path):
             # TODO: need to check right type
             dhData[(r[0],r[1],r[2])]=int(r[3])      
     mainForm.refresh()
-
-if __name__ == '__main__':
-    app = wx.App(0)
-    frame = MainForm(None, -1, "Edit : ")
-    frame.start(0)
-    app.MainLoop()
