@@ -2,7 +2,25 @@
 import wx
 import store
 import printer
+import operator
 import wx.grid as gridlib
+
+def moneyStr(money):
+    v,c,m = money,0,False
+    r = ""
+    if v<0:
+        v,m=-v,True
+    while v!=0:
+        digit=v%10
+        r = str(digit) + r
+        c+=1
+        v=v//10
+        if c==3 and v!=0:
+            r = ',' + r
+            c=0
+    r = ('-' if m else '') + r
+    return r
+
 
 class StartForm(wx.Frame):
     def __init__(self, main, *args, **kwargs):
@@ -50,20 +68,31 @@ class MainForm(wx.Frame):
         store.init(self)
 
     def refresh(self):
-        data = store.dhData
+        data = sorted(store.dhData.items(), key=operator.itemgetter(0))
         history_size, undoCount = store.history_size, store.undoCount
         sheet=self.sheet
         # TODO : check combobox. make the right summation and SORT
         
+        remain=0
         sheet.ClearGrid()
         for ind, tup in enumerate(data):
-            for ind2,val in enumerate(tup):
+            k,v=tup
+            for ind2,val in enumerate(k):
                 sheet.SetCellValue(ind, ind2, val)
-            val = data[tup]
-            val = (str(val),"0") if val>0 else ("0", str(-val))
+            remain += v
+            val = (moneyStr(v),"0",moneyStr(remain)) if v>0 else ("0", moneyStr(-v),moneyStr(remain))
             for ind2,v in enumerate(val):
                 sheet.SetCellValue(ind,ind2+3,v)
-            
+        if len(store.activityData)-undoCount==0:
+            # can not undo
+            self.butUndo.Disable()
+        else:
+            self.butUndo.Enable()
+
+    def getSelectedRows(self):
+        # TODO : http://ginstrom.com/scribbles/2008/09/07/getting-the-selected-cells-from-a-wxpython-grid/
+        # Get Rows!!
+        pass
 
     #event Methods
     def onLoad(self, evt):
@@ -93,16 +122,26 @@ class MainForm(wx.Frame):
 
     def onCheckSum(self, evt):
         self.refresh()
+
+    def onAdd(self, evt):
+        pass
+
+    def onRemove(self,evt):
+        pass
+        
+    
+    def onModify(self,evt):
+        pass
         
 
     #widgets
     def createControl(self):
         self.sums = ['날짜별 합계','행사별 합계','총 합계']
         self.sheet = gridlib.Grid(self)
-        self.sheet.CreateGrid(10,5)
+        self.sheet.CreateGrid(10,6)
         
         for ind,name in enumerate(['날짜','행사','내용','수입',
-        '지출']):
+        '지출','잔액']):
             self.sheet.SetColLabelValue(ind,name)
         self.sheet.SetRowLabelSize(0)
         self.sheet.EnableEditing(False)
@@ -135,7 +174,10 @@ class MainForm(wx.Frame):
             (self, wx.EVT_CLOSE,self.onClose),
             (self.butNew, wx.EVT_BUTTON, self.onNewFile),
             (self.butSave, wx.EVT_BUTTON, store.dialogSave),
-            (self.butLoad, wx.EVT_BUTTON, store.dialogLoad)
+            (self.butLoad, wx.EVT_BUTTON, store.dialogLoad),
+            (self.butAdd, wx.EVT_BUTTON, self.onAdd),
+            (self.butDel, wx.EVT_BUTTON, self.onRemove),
+            (self.butMod, wx.EVT_BUTTON, self.onModify)
         ]
         for control, evt, func in evts:
             control.Bind(evt,func)

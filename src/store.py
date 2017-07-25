@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 import wx
+import re
 
 dhData, file_path = {}, None
 is_tracing, is_saved = False, True
@@ -43,11 +44,15 @@ def acitivityWriter(func):
 
 @acitivityWriter
 def add(obj):
+    # TODO : check the text is not have comma (,)
     pass
 
 @acitivityWriter
 def remove(obj):
-    pass
+    '''This Function is Temporary used for presenting selected rows'''
+    box = wx.MessageBox(str(obj))
+    box.ShowModal()
+
 
 @acitivityWriter
 def modify(prev, next):
@@ -65,7 +70,7 @@ def dialogSave(evt=None): # call dialog and saving
     if dialog.ShowModal() == wx.ID_CANCEL:
         return
     
-    mainForm.SetTitle("FIle : "+dialog.GetPath())
+    mainForm.SetTitle("File : "+dialog.GetPath())
     save(dialog.GetPath())
 
 def dialogLoad(evt=None): # call dialog and loading
@@ -75,7 +80,7 @@ def dialogLoad(evt=None): # call dialog and loading
     if dialog.ShowModal() == wx.ID_CANCEL:
         return
 
-    mainForm.SetTitle("FIle : "+dialog.GetPath())
+    mainForm.SetTitle("File : "+dialog.GetPath())
     load(dialog.GetPath())
 
 def save(path):
@@ -92,7 +97,8 @@ def load(path):
     with open(path) as f:
         for str in f:
             r = [t.strip() for t in str.split(',')]
-
+            date, fest, body, val = r
+            
             # TODO: need to check right type
-            dhData[(r[0],r[1],r[2])]=int(r[3])      
+            dhData[date, fest, body]=int(val)      
     mainForm.refresh()
