@@ -21,6 +21,52 @@ def moneyStr(money):
     r = ('-' if m else '') + r
     return r
 
+def corners_to_cells(top_lefts, bottom_rights):
+    """
+    Take lists of top left and bottom right corners, and
+    return a list of all the cells in that range
+    """
+    cells = set()
+    for top_left, bottom_right in zip(top_lefts, bottom_rights):
+
+        rows_start = top_left[0]
+        rows_end = bottom_right[0]
+
+        rows = range(rows_start, rows_end+1)
+
+        cells=cells.union(rows)
+
+    return cells
+
+def get_selected_cells(grid):
+    """
+    Return the selected cells in the grid as a list of
+    (row, col) pairs.
+    We need to take care of three possibilities:
+    1. Multiple cells were click-selected (GetSelectedCells)
+    2. Multiple cells were drag selected (GetSelectionBlock…)
+    3. A single cell only is selected (CursorRow/Col)
+    """
+
+    #TODO : need to check and get right data for their combination 
+    top_left = grid.GetSelectionBlockTopLeft()
+
+    if top_left:
+        bottom_right = grid.GetSelectionBlockBottomRight()
+        return corners_to_cells(top_left, bottom_right)
+
+    selection = grid.GetSelectedCells()
+
+    if not selection:
+        row = grid.GetGridCursorRow()
+        col = grid.GetGridCursorCol()
+        return row
+
+    rows=set()
+    for cell in selection:
+        rows.add(cell.GetRow())
+
+    return rows
 
 class StartForm(wx.Frame):
     def __init__(self, main, *args, **kwargs):
@@ -92,7 +138,8 @@ class MainForm(wx.Frame):
     def getSelectedRows(self):
         # TODO : http://ginstrom.com/scribbles/2008/09/07/getting-the-selected-cells-from-a-wxpython-grid/
         # Get Rows!!
-        pass
+        return get_selected_cells(self.sheet)
+        
 
     #event Methods
     def onLoad(self, evt):
@@ -127,7 +174,8 @@ class MainForm(wx.Frame):
         pass
 
     def onRemove(self,evt):
-        pass
+        obj=self.getSelectedRows()
+        store.remove(obj)
         
     
     def onModify(self,evt):
@@ -147,15 +195,16 @@ class MainForm(wx.Frame):
         self.sheet.EnableEditing(False)
         self.sheet.DisableDragGridSize()
 
-        self.butNew = wx.Button(self, label="새 파일")
-        self.butLoad = wx.Button(self, label="불러오기")
-        self.butSave = wx.Button(self,label="저장하기")
-        self.butAdd = wx.Button(self,label="내용 추가")
-        self.butDel = wx.Button(self,label="삭제")
-        self.butMod = wx.Button(self,label="수정")
-        self.butUndo = wx.Button(self,label="되돌리기")
-        self.butRedo = wx.Button(self,label="다시실행")
-        self.butPrint = wx.Button(self,label="프린트")
+        size = (100,35)
+        self.butNew = wx.Button(self, label="새 파일", size=size)
+        self.butLoad = wx.Button(self, label="불러오기", size=size)
+        self.butSave = wx.Button(self,label="저장하기", size=size)
+        self.butAdd = wx.Button(self,label="내용 추가", size=size)
+        self.butDel = wx.Button(self,label="삭제", size=size)
+        self.butMod = wx.Button(self,label="수정", size=size)
+        self.butUndo = wx.Button(self,label="되돌리기", size=size)
+        self.butRedo = wx.Button(self,label="다시실행", size=size)
+        self.butPrint = wx.Button(self,label="프린트", size=size)
         self.buttons = [
             (self.butNew, self.butLoad),
             self.butSave,self.butAdd,
