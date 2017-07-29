@@ -103,9 +103,11 @@ class StartForm(wx.Frame):
 
 
 class MainForm(wx.Frame):
+
     def __init__(self, *args, **kwargs):
         super(MainForm, self).__init__(*args, **kwargs)
         self.firstForm = StartForm(self,None,-1,args[2])
+        self.SetBackgroundColour("WHITE")
         self.createControl()
         self.bindEvents()
         self.doLayout()
@@ -239,26 +241,81 @@ class MainForm(wx.Frame):
         self.divider = wx.BoxSizer()
         left, right = wx.BoxSizer(orient=wx.VERTICAL), wx.BoxSizer(orient=wx.VERTICAL)
         
-        left.Add(self.sheet, flag=wx.EXPAND)
+        left.Add(self.sheet, 1,flag=wx.EXPAND)
         box = wx.BoxSizer()
-        box.AddMany(self.checks)
-        left.Add(box, flag=wx.EXPAND)
+        box.AddMany([(b,1,wx.EXPAND) for b in self.checks])
+        left.Add(box, 0,flag=wx.EXPAND)
 
         # right buttons add
         for but in self.buttons:
             if isinstance(but,tuple):
                 double = wx.BoxSizer()
-                double.AddMany(but)
-                right.Add(double)
+                double.AddMany([ (b,1,wx.EXPAND) for b in but])
+                right.Add(double,1)
             else:
-                right.Add(but,flag=wx.EXPAND)
-        self.divider.Add(left)
-        self.divider.Add(right,flag=wx.EXPAND)
+                right.Add(but,1,flag=wx.EXPAND)
+        self.divider.Add(left,3,flag=wx.EXPAND)
+        self.divider.Add(right,1,flag=wx.EXPAND)
         self.SetSizerAndFit(self.divider)  
+class DataForm(wx.Frame):
+    def __init__(self,mainform,flag,data=None):
+        self.mainform=mainform
+        self.flag=flag
+        self.data=data
+        #Test code
+        if flag=='modify' and not isinstance(data,list):
+            print "Wrong input data in create DataForm"
+            raise SystemExit()
+               
+        title = '추가' if flag=='add' else '수정'
+        super(DataForm, self).__init__(None,-1,title)
+        self.createControl()
+        self.bindEvent()
+        self.doLayout()       
+
+    #Events
+
+    def onOk(self, evt):
+        # TODO : control store.dhData and mainform.refresh() and
+        pass
+
+    def onCancel(self,evt):
+        # TODO : show mainform and destory self
+        pass
+
+    #Widgets
+    def createControl(self):
+        self.sheet = gridlib.Grid(self)
+        self.sheet.CreateGrid(5 if self.flag=='add' else len(self.data), 5)
+
+        for ind,name in enumerate(['날짜','행사','내용','수입','지출']):
+            self.sheet.SetColLabelValue(ind,name)
+        self.sheet.SetRowLabelSize(0)
+        self.sheet.DisableDragGridSize()
+                
+        size = (100,30)
+        self.okButton = wx.Button(self, label='완료', size=size)
+        self.cancelButton = wx.Button(self, label='취소',size=size)
+
+    def bindEvent(self):
+        self.okButton.Bind(wx.EVT_BUTTON, self.onOk)
+        self.cancelButton.Bind(wx.EVT_BUTTON, self.onCancel)     
+
+    def doLayout(self):
+        box, buttons = wx.BoxSizer(), wx.BoxSizer(orient=wx.VERTICAL)
+        buttons.AddMany([
+            (self.okButton, 1, wx.EXPAND),
+            (self.cancelButton, 1, wx.EXPAND)
+        ])
+        box.AddMany([(self.sheet),(buttons,0,wx.EXPAND)])
+
+        self.SetSizerAndFit(box)
 
 # UI Test Code!
 if __name__ == "__main__":
     app = wx.App(0)
     main = MainForm(None, -1, "입출금내역 작성기")
+    # a = DataForm(None, 'add')
+    # a.Show()
     app.MainLoop()
     
