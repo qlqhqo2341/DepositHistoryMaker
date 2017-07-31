@@ -4,6 +4,7 @@ import store
 import printer
 import operator
 import wx.grid as gridlib
+import wx.lib.scrolledpanel as scrolled
 
 def moneyStr(money):
     v,c,m = money,0,False
@@ -78,13 +79,16 @@ class StartForm(wx.Frame):
 
     def newFile(self,evt):
         store.init(self.main)
+        self.main.SetTitle('입출금내역 작성기')
         self.main.Show()
+        self.main.Maximize() if not self.main.IsMaximized() else ''
         self.Hide()
 
     def load(self,evt):
         self.Hide()
         self.main.Show()
         store.dialogLoad()
+        self.main.Maximize() if not self.main.IsMaximized() else ''
 
     #Widgets
     def createControl(self):
@@ -122,15 +126,19 @@ class MainForm(wx.Frame):
         # TODO : check combobox. make the right summation and SORT
         
         remain=0
+        sheet.DeleteRows(numRows=sheet.GetNumberRows()) if sheet.GetNumberRows() > 0 else ''
         sheet.ClearGrid()
         for ind, tup in enumerate(data):
             k,v=tup
+            sheet.AppendRows()
             for ind2,val in enumerate(k):
                 sheet.SetCellValue(ind, ind2, val)
             remain += v
             val = (moneyStr(v),"0",moneyStr(remain)) if v>0 else ("0", moneyStr(-v),moneyStr(remain))
             for ind2,v in enumerate(val):
                 sheet.SetCellValue(ind,ind2+3,v)
+
+        sheet.AutoSize()
         if len(store.activityData)-undoCount==0:
             # can not undo
             self.butUndo.Disable()
@@ -182,13 +190,15 @@ class MainForm(wx.Frame):
     
     def onModify(self,evt):
         pass
-        
+       
 
     #widgets
     def createControl(self):
         self.sums = ['날짜별 합계','행사별 합계','총 합계']
-        self.sheet = gridlib.Grid(self)
-        self.sheet.CreateGrid(10,6)
+        self.scrolledSheet = scrolled.ScrolledPanel(self)
+        self.sheet = gridlib.Grid(self.scrolledSheet)
+        self.sheet.CreateGrid(0,6)
+        self.sheet.SetDefaultCellFont(wx.Font(wx.FontInfo(13).Bold()))
         
         for ind,name in enumerate(['날짜','행사','내용','수입',
         '지출','잔액']):
@@ -241,7 +251,12 @@ class MainForm(wx.Frame):
         self.divider = wx.BoxSizer()
         left, right = wx.BoxSizer(orient=wx.VERTICAL), wx.BoxSizer(orient=wx.VERTICAL)
         
-        left.Add(self.sheet, 1,flag=wx.EXPAND)
+        scrollsizer = wx.BoxSizer()
+        scrollsizer.Add(self.sheet, 1, wx.EXPAND)
+        self.scrolledSheet.SetSizerAndFit(scrollsizer)
+        self.scrolledSheet.SetupScrolling()
+
+        left.Add(self.scrolledSheet, 1,flag=wx.EXPAND)
         box = wx.BoxSizer()
         box.AddMany([(b,1,wx.EXPAND) for b in self.checks])
         left.Add(box, 0,flag=wx.EXPAND)
@@ -254,9 +269,10 @@ class MainForm(wx.Frame):
                 right.Add(double,1)
             else:
                 right.Add(but,1,flag=wx.EXPAND)
-        self.divider.Add(left,3,flag=wx.EXPAND)
-        self.divider.Add(right,1,flag=wx.EXPAND)
-        self.SetSizerAndFit(self.divider)  
+        self.divider.Add(left,1,flag=wx.EXPAND)
+        self.divider.Add(right,0,flag=wx.EXPAND)
+        self.SetSizerAndFit(self.divider)
+        
 class DataForm(wx.Frame):
     def __init__(self,mainform,flag,data=None):
         self.mainform=mainform

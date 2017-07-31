@@ -80,7 +80,7 @@ def dialogLoad(evt=None): # call dialog and loading
     if dialog.ShowModal() == wx.ID_CANCEL:
         return
 
-    mainForm.SetTitle("File : "+dialog.GetPath())
+    mainForm.SetTitle(u"입출금내역작성기"+" File : "+dialog.GetPath())
     load(dialog.GetPath())
 
 def save(path):
