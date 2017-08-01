@@ -125,19 +125,32 @@ class MainForm(wx.Frame):
         sheet=self.sheet
         # TODO : check combobox. make the right summation and SORT
         
+        def appendRow(seq):
+            sheet.AppendRows()
+            ind = sheet.GetNumberRows()
+            for i,v in enumerate(seq):
+                sheet.SetCellValue(ind-1,i,str(v))
+                sheet.SetCellAlignment(ind-1,i,\
+                    wx.ALIGN_RIGHT if i>2 else wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+
+
         remain=0
         sheet.DeleteRows(numRows=sheet.GetNumberRows()) if sheet.GetNumberRows() > 0 else ''
         sheet.ClearGrid()
+
+        totalGet=0
+        totalPay=0
+        byDay,byFest = dict(),dict() # TODO 값을 (get,pay)로 따로 저장한 뒤 읽어들이면서 업데이트 하고 dict에 빈 값을 입력한 순간 
         for ind, tup in enumerate(data):
             k,v=tup
-            sheet.AppendRows()
-            for ind2,val in enumerate(k):
-                sheet.SetCellValue(ind, ind2, val)
             remain += v
-            val = (moneyStr(v),"0",moneyStr(remain)) if v>0 else ("0", moneyStr(-v),moneyStr(remain))
-            for ind2,v in enumerate(val):
-                sheet.SetCellValue(ind,ind2+3,v)
-
+            
+            val,totalGet,totalPay = [(moneyStr(v),"0",moneyStr(remain)),totalGet+v,totalPay] if v>0 else \
+                [("0", moneyStr(-v),moneyStr(remain)),totalGet,totalPay-v]
+            appendRow(k+val)
+       
+        if self.checks[2].GetValue():
+            appendRow(['All','All','Total get and pay',moneyStr(totalGet),moneyStr(totalPay)])
         sheet.AutoSize()
         if len(store.activityData)-undoCount==0:
             # can not undo
@@ -199,6 +212,7 @@ class MainForm(wx.Frame):
         self.sheet = gridlib.Grid(self.scrolledSheet)
         self.sheet.CreateGrid(0,6)
         self.sheet.SetDefaultCellFont(wx.Font(wx.FontInfo(13).Bold()))
+        self.sheet.SetDefaultCellAlignment(wx.ALIGN_RIGHT,wx.ALIGN_CENTER)
         
         for ind,name in enumerate(['날짜','행사','내용','수입',
         '지출','잔액']):
