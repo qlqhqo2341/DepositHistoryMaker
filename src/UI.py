@@ -7,20 +7,29 @@ import wx.grid as gridlib
 import wx.lib.scrolledpanel as scrolled
 
 def moneyStr(money):
-    v,c,m = money,0,False
-    r = ""
-    if v<0:
-        v,m=-v,True
-    while v!=0:
-        digit=v%10
-        r = str(digit) + r
-        c+=1
-        v=v//10
-        if c==3 and v!=0:
-            r = ',' + r
-            c=0
-    r = ('-' if m else '') + r
-    return r
+    def core(obj):
+        v,c,m = obj,0,False
+        r = ""
+        if v<0:
+            v,m=-v,True
+        while v!=0:
+            digit=v%10
+            r = str(digit) + r
+            c+=1
+            v=v//10
+            if c==3 and v!=0:
+                r = ',' + r
+                c=0
+        r = ('-' if m else '') + r
+        return r
+
+    if isinstance(money,list) or isinstance(money,tuple):
+        r = []
+        for obj in money:
+            r.append(moneyStr(obj))
+        return r
+    else:
+        return core(money)
 
 def corners_to_cells(top_lefts, bottom_rights):
     """
@@ -121,8 +130,10 @@ class MainForm(wx.Frame):
 
     def refresh(self):
         data = sorted(store.dhData.items(), key=operator.itemgetter(0))
+        present = list()
         history_size, undoCount = store.history_size, store.undoCount
         sheet=self.sheet
+        postiveAdd = lambda x,y,z: [x+z,y] if z>0 else [x,y-z]
         # TODO : check combobox. make the right summation and SORT
         
         def appendRow(seq):
@@ -134,23 +145,47 @@ class MainForm(wx.Frame):
                     wx.ALIGN_RIGHT if i>2 else wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 
 
-        remain=0
         sheet.DeleteRows(numRows=sheet.GetNumberRows()) if sheet.GetNumberRows() > 0 else ''
         sheet.ClearGrid()
 
-        totalGet=0
-        totalPay=0
-        byDay,byFest = dict(),dict() # TODO 값을 (get,pay)로 따로 저장한 뒤 읽어들이면서 업데이트 하고 dict에 빈 값을 입력한 순간 
+        remain = 0
+        totalGet, totalpay, dayGet, dayPay,festGet,festPay = 0,0,0,0,0,0
+        daySumBool,festSumBool,totalSumBool = [but.GetValue() for but in self.checks]
+        # calculate summation before Present data
         for ind, tup in enumerate(data):
-            k,v=tup
-            remain += v
+            nowKey,nowVal = tup
+            nowKey = list(nowKey)
+            dayGet,dayPay = postiveAdd(dayGet,dayPay,nowVal)
+            if nowKey[1] != '':
+                festGet,festPay = postiveAdd(festGet,festPay,nowVal)
+            totalGet,totalpay = postiveAdd(totalGet,totalpay,nowVal)
             
-            val,totalGet,totalPay = [(moneyStr(v),"0",moneyStr(remain)),totalGet+v,totalPay] if v>0 else \
-                [("0", moneyStr(-v),moneyStr(remain)),totalGet,totalPay-v]
-            appendRow(k+val)
+            remain += nowVal
+            present.append(list(nowKey)+moneyStr(postiveAdd(0,0,nowVal))+[remain])
+            
+            #Exist next
+            if len(data) != ind+1:
+                nextKey,nextVal = data[ind+1]
+                if nowKey[0] != nextKey[0]: #Day check
+                    present.append(nowKey[0:2],['All']+moneyStr([festGet,festPay])) \
+                        if festSumBool and nowKey[1] != '' else ''
+                    present.append(nowKey[0:1]+['All','All']+moneyStr([dayGet,dayPay])) if daySumBool else ''
+                    festGet,festPay,dayGet,dayPay=0,0,0,0
+                    continue
+                if nowKey[1] != nextKey[1] and nowKey[1] != '': #Fest check
+                    present.append(nowKey[0:2]+['All']+moneyStr([festGet,festPay])) if festSumBool else ''
+                    festGet,festPay=0,0
+                    continue                
+            #Last tuple
+            else:
+                present.append([nowKey[0],'All','All']+moneyStr([festGet,festPay])) if festSumBool else ''
+                present.append(nowKey[0:2]+['All']+moneyStr([dayGet,dayPay])) if daySumBool else ''
+                present.append(['All']*3+moneyStr([totalGet,totalPay])) if totalSumBool else ''
+
+        # present grid table by present list
+        for lis in present:
+            appendRow(lis)
        
-        if self.checks[2].GetValue():
-            appendRow(['All','All','Total get and pay',moneyStr(totalGet),moneyStr(totalPay)])
         sheet.AutoSize()
         if len(store.activityData)-undoCount==0:
             # can not undo
