@@ -24,9 +24,12 @@ class DataForm(wx.Frame):
         self.doLayout()       
 
     #Events
+    # TODO : many things events
+    # enter at last cell -> make new rows, resizing form (or make scroll)
+    # if day and fest entered and next cell -> auto fill
 
     def onOk(self, evt):
-        # TODO : control store.dhData and mainform.refresh() and
+        # TODO : control store.dhData and mainform.refresh() and destroy self
         pass
 
     def onCancel(self,evt):
