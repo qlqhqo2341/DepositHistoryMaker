@@ -5,6 +5,7 @@ import printer
 import operator
 import wx.grid as gridlib
 import wx.lib.scrolledpanel as scrolled
+from dataForm import DataForm
 
 def moneyStr(money):
     def core(obj):
@@ -149,7 +150,7 @@ class MainForm(wx.Frame):
         sheet.ClearGrid()
 
         remain = 0
-        totalGet, totalpay, dayGet, dayPay,festGet,festPay = 0,0,0,0,0,0
+        totalGet, totalPay, dayGet, dayPay,festGet,festPay = 0,0,0,0,0,0
         daySumBool,festSumBool,totalSumBool = [but.GetValue() for but in self.checks]
         # calculate summation before Present data
         for ind, tup in enumerate(data):
@@ -158,16 +159,16 @@ class MainForm(wx.Frame):
             dayGet,dayPay = postiveAdd(dayGet,dayPay,nowVal)
             if nowKey[1] != '':
                 festGet,festPay = postiveAdd(festGet,festPay,nowVal)
-            totalGet,totalpay = postiveAdd(totalGet,totalpay,nowVal)
+            totalGet,totalPay = postiveAdd(totalGet,totalPay,nowVal)
             
             remain += nowVal
-            present.append(list(nowKey)+moneyStr(postiveAdd(0,0,nowVal))+[remain])
+            present.append(list(nowKey)+moneyStr(postiveAdd(0,0,nowVal)+[remain]))
             
             #Exist next
             if len(data) != ind+1:
                 nextKey,nextVal = data[ind+1]
                 if nowKey[0] != nextKey[0]: #Day check
-                    present.append(nowKey[0:2],['All']+moneyStr([festGet,festPay])) \
+                    present.append(nowKey[0:2]+['All']+moneyStr([festGet,festPay])) \
                         if festSumBool and nowKey[1] != '' else ''
                     present.append(nowKey[0:1]+['All','All']+moneyStr([dayGet,dayPay])) if daySumBool else ''
                     festGet,festPay,dayGet,dayPay=0,0,0,0
@@ -178,8 +179,9 @@ class MainForm(wx.Frame):
                     continue                
             #Last tuple
             else:
-                present.append([nowKey[0],'All','All']+moneyStr([festGet,festPay])) if festSumBool else ''
-                present.append(nowKey[0:2]+['All']+moneyStr([dayGet,dayPay])) if daySumBool else ''
+                present.append(nowKey[0:2]+['All']+moneyStr([festGet,festPay])) \
+                    if festSumBool and nowKey[1] != '' else ''
+                present.append([nowKey[0],'All','All']+moneyStr([dayGet,dayPay])) if daySumBool else ''
                 present.append(['All']*3+moneyStr([totalGet,totalPay])) if totalSumBool else ''
 
         # present grid table by present list
@@ -223,13 +225,23 @@ class MainForm(wx.Frame):
             elif r == wx.ID_OK:
                 store.dialogSave()
         self.Hide()
+        if 'dataForm' in self.__dict__ and self.dataForm:
+            self.dataForm.Destroy()
+            self.dataForm = None
         self.firstForm.Show()
 
     def onCheckSum(self, evt):
         self.refresh()
 
     def onAdd(self, evt):
-        pass
+        if not 'dataForm' in self.__dict__ or not self.dataForm:
+            self.dataForm = DataForm(self,'add')
+            self.dataForm.Show()
+        else:
+            self.dataForm.Destroy()
+            self.dataForm=None
+            self.dataForm = DataForm(self,'add')
+            self.dataForm.Show()
 
     def onRemove(self,evt):
         obj=self.getSelectedRows()
@@ -322,59 +334,7 @@ class MainForm(wx.Frame):
         self.divider.Add(right,0,flag=wx.EXPAND)
         self.SetSizerAndFit(self.divider)
         
-class DataForm(wx.Frame):
-    def __init__(self,mainform,flag,data=None):
-        self.mainform=mainform
-        self.flag=flag
-        self.data=data
-        #Test code
-        if flag=='modify' and not isinstance(data,list):
-            print "Wrong input data in create DataForm"
-            raise SystemExit()
-               
-        title = '추가' if flag=='add' else '수정'
-        super(DataForm, self).__init__(None,-1,title)
-        self.createControl()
-        self.bindEvent()
-        self.doLayout()       
 
-    #Events
-
-    def onOk(self, evt):
-        # TODO : control store.dhData and mainform.refresh() and
-        pass
-
-    def onCancel(self,evt):
-        # TODO : show mainform and destory self
-        pass
-
-    #Widgets
-    def createControl(self):
-        self.sheet = gridlib.Grid(self)
-        self.sheet.CreateGrid(5 if self.flag=='add' else len(self.data), 5)
-
-        for ind,name in enumerate(['날짜','행사','내용','수입','지출']):
-            self.sheet.SetColLabelValue(ind,name)
-        self.sheet.SetRowLabelSize(0)
-        self.sheet.DisableDragGridSize()
-                
-        size = (100,30)
-        self.okButton = wx.Button(self, label='완료', size=size)
-        self.cancelButton = wx.Button(self, label='취소',size=size)
-
-    def bindEvent(self):
-        self.okButton.Bind(wx.EVT_BUTTON, self.onOk)
-        self.cancelButton.Bind(wx.EVT_BUTTON, self.onCancel)     
-
-    def doLayout(self):
-        box, buttons = wx.BoxSizer(), wx.BoxSizer(orient=wx.VERTICAL)
-        buttons.AddMany([
-            (self.okButton, 1, wx.EXPAND),
-            (self.cancelButton, 1, wx.EXPAND)
-        ])
-        box.AddMany([(self.sheet),(buttons,0,wx.EXPAND)])
-
-        self.SetSizerAndFit(box)
 
 # UI Test Code!
 if __name__ == "__main__":
