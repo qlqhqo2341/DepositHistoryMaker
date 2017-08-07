@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import wx, store
 import wx.grid as gridlib
-
+from store import moneyStr,unMoneyStr
 
 class DataForm(wx.Frame):
     def __init__(self,mainform,flag,data=None):
@@ -18,7 +18,6 @@ class DataForm(wx.Frame):
             style=wx.DEFAULT_FRAME_STYLE ^ \
                 wx.MAXIMIZE_BOX ^ \
                 wx.RESIZE_BORDER)
-        
         self.createControl()
         self.bindEvent()
         self.doLayout()       
@@ -38,6 +37,23 @@ class DataForm(wx.Frame):
         self.Destroy()
         pass
 
+    def onCellChanging(self,evt):
+        r,c = evt.GetRow(), evt.GetCol()
+        totalR = self.sheet.GetNumberRows()
+        if c in range(3,5) and c!='' and totalR == r+1:
+            # Last Festival value is not empty
+            self.sheet.AppendRows()
+            if self.sheet.GetCellValue(totalR-1,1) != '':
+                self.sheet.SetCellValue(totalR,0,
+                    self.sheet.GetCellValue(totalR-1,0))
+                self.sheet.SetCellValue(totalR,1,
+                    self.sheet.GetCellValue(totalR-1,1))
+                self.sheet.SetGridCursor(totalR,2)
+                self.sheet.MakeCellVisible(totalR,2)
+            else:
+                self.sheet.SetGridCursor(totalR,0)
+                self.sheet.MakeCellVisible(totalR,0)
+
     #Widgets
     def createControl(self):
         self.sheet = gridlib.Grid(self)
@@ -54,7 +70,8 @@ class DataForm(wx.Frame):
 
     def bindEvent(self):
         self.okButton.Bind(wx.EVT_BUTTON, self.onOk)
-        self.cancelButton.Bind(wx.EVT_BUTTON, self.onCancel)     
+        self.cancelButton.Bind(wx.EVT_BUTTON, self.onCancel)
+        self.sheet.Bind(gridlib.EVT_GRID_CELL_CHANGING, self.onCellChanging)    
 
     def doLayout(self):
         box, buttons = wx.BoxSizer(), wx.BoxSizer(orient=wx.VERTICAL)

@@ -6,31 +6,8 @@ import operator
 import wx.grid as gridlib
 import wx.lib.scrolledpanel as scrolled
 from dataForm import DataForm
+from store import moneyStr,unMoneyStr
 
-def moneyStr(money):
-    def core(obj):
-        v,c,m = obj,0,False
-        r = ""
-        if v<0:
-            v,m=-v,True
-        while v!=0:
-            digit=v%10
-            r = str(digit) + r
-            c+=1
-            v=v//10
-            if c==3 and v!=0:
-                r = ',' + r
-                c=0
-        r = ('-' if m else '') + r
-        return r
-
-    if isinstance(money,list) or isinstance(money,tuple):
-        r = []
-        for obj in money:
-            r.append(moneyStr(obj))
-        return r
-    else:
-        return core(money)
 
 def corners_to_cells(top_lefts, bottom_rights):
     """
@@ -188,7 +165,7 @@ class MainForm(wx.Frame):
         for lis in present:
             appendRow(lis)
        
-        sheet.AutoSize()
+        sheet.Fit()
         if len(store.activityData)-undoCount==0:
             # can not undo
             self.butUndo.Disable()
@@ -255,8 +232,7 @@ class MainForm(wx.Frame):
     #widgets
     def createControl(self):
         self.sums = ['날짜별 합계','행사별 합계','총 합계']
-        self.scrolledSheet = scrolled.ScrolledPanel(self)
-        self.sheet = gridlib.Grid(self.scrolledSheet)
+        self.sheet = gridlib.Grid(self)
         self.sheet.CreateGrid(0,6)
         self.sheet.SetDefaultCellFont(wx.Font(wx.FontInfo(13).Bold()))
         self.sheet.SetDefaultCellAlignment(wx.ALIGN_RIGHT,wx.ALIGN_CENTER)
@@ -311,13 +287,7 @@ class MainForm(wx.Frame):
     def doLayout(self):
         self.divider = wx.BoxSizer()
         left, right = wx.BoxSizer(orient=wx.VERTICAL), wx.BoxSizer(orient=wx.VERTICAL)
-        
-        scrollsizer = wx.BoxSizer()
-        scrollsizer.Add(self.sheet, 1, wx.EXPAND)
-        self.scrolledSheet.SetSizerAndFit(scrollsizer)
-        self.scrolledSheet.SetupScrolling()
-
-        left.Add(self.scrolledSheet, 1,flag=wx.EXPAND)
+        left.Add(self.sheet, 1)
         box = wx.BoxSizer()
         box.AddMany([(b,1,wx.EXPAND) for b in self.checks])
         left.Add(box, 0,flag=wx.EXPAND)
@@ -340,7 +310,5 @@ class MainForm(wx.Frame):
 if __name__ == "__main__":
     app = wx.App(0)
     main = MainForm(None, -1, "입출금내역 작성기")
-    # a = DataForm(None, 'add')
-    # a.Show()
     app.MainLoop()
     

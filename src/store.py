@@ -102,3 +102,37 @@ def load(path):
             # TODO: need to check right type
             dhData[date, fest, body]=int(val)      
     mainForm.refresh()
+
+def supportSequence(ori_func):
+    def core(args):
+        if isinstance(args,list) or isinstance(args,tuple):
+            r = [core(i) for i in args]
+            return r
+        else:
+            return ori_func(args)
+    return core
+
+@supportSequence
+def moneyStr(obj):
+    v,c,m = obj,0,False
+    r = ""
+    if v<0:
+        v,m=-v,True
+    while v!=0:
+        digit=v%10
+        r = str(digit) + r
+        c+=1
+        v=v//10
+        if c==3 and v!=0:
+            r = ',' + r
+            c=0
+    r = ('-' if m else '') + r
+    return r
+
+@supportSequence
+def unMoneyStr(obj):
+    r = ""
+    for char in obj:
+        if char!=',':
+            r = r+str(char)
+    return r
