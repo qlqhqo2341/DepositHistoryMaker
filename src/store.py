@@ -67,8 +67,7 @@ def add(obj):
     if not isinstance(obj,list):
         print >>sys.stderr,"AddFunc receive not list as argument"
         return
-    rights = typeChecking(obj)
-    finalList = [ obj[i] for i in rights]
+    
     
 
     
