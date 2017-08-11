@@ -72,6 +72,7 @@ class StartForm(wx.Frame):
         self.Hide()
 
     def load(self,evt):
+        store.init(self.main)
         self.Hide()
         self.main.Show()
         store.dialogLoad()
@@ -180,7 +181,7 @@ class MainForm(wx.Frame):
 
     #event Methods
     def onLoad(self, evt):
-        store.init()
+        store.init(self)
         store.dialogLoad()
 
     def onSave(self, evt):

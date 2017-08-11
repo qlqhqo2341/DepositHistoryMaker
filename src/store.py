@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import wx
 import re
+import sys
 
 dhData, file_path = {}, None
 is_tracing, is_saved = False, True
@@ -12,10 +13,29 @@ def init(Frame):
     global activityData, undoCount, history_size
     global mainForm
     dhData, file_path = {}, None
-    is_tracing, is_saved = False, True
+    is_tracing, is_saved = True, True
     activityData , undoCount, history_size = [], 0, 6
     mainForm = Frame
     mainForm.refresh()
+
+def typeChecking(items,flag=None):
+    if not isinstance(items, list):
+        print >>sys.stderr,"typechecking receive not list as argument"
+        return
+    passList = set(range(len(items)))
+    checkList = [
+        re.compile(r'\d{4}-\d{1,2}-\d{1,2}'), # date
+        re.compile(r'[^,]?'), # fest
+        re.compile(r'[^,]+'), # body
+        re.compile(r'-?\d') # value
+    ]
+    # if userdata, value checks twice
+    checkList += [checkList[-1]] if flag=='userdata' else [] 
+    for ind,item in enumerate(items):
+        for checker,obj in zip(checkList,item):
+            if not checker.match(obj):
+                passList.discard(ind)
+    return passList
 
 def tracingOn():
     '''
@@ -23,10 +43,9 @@ def tracingOn():
     Need to remove activityData behind undoCount data
     '''
     global undoCount
-    if undoCount > 0:
-        for i in range(undoCount):
-            activityData.pop(-1)
-        undoCount=0
+    for i in range(undoCount):
+        activityData.pop(-1)
+    undoCount=0
     is_tracing = True
 
 def acitivityWriter(func):
@@ -45,8 +64,14 @@ def acitivityWriter(func):
 @acitivityWriter
 def add(obj):
     # TODO : check the text is not have comma (,)
-    pass
+    if not isinstance(obj,list):
+        print >>sys.stderr,"AddFunc receive not list as argument"
+        return
+    rights = typeChecking(obj)
+    finalList = [ obj[i] for i in rights]
+    
 
+    
 @acitivityWriter
 def remove(obj):
     '''This Function is Temporary used for presenting selected rows'''
@@ -131,8 +156,4 @@ def moneyStr(obj):
 
 @supportSequence
 def unMoneyStr(obj):
-    r = ""
-    for char in obj:
-        if char!=',':
-            r = r+str(char)
-    return r
+    return obj.replace(',','')

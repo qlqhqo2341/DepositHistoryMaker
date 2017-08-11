@@ -28,7 +28,12 @@ class DataForm(wx.Frame):
     # if day and fest entered and next cell -> auto fill
 
     def onOk(self, evt):
-        # TODO : control store.dhData and mainform.refresh() and destroy self
+        # TODO : use store.add and mainform.refresh() and destroy self
+        rights = store.typeChecking(obj)
+        finalList = [ obj[i] for i in rights ]
+
+        store.add(finalList)
+        
         pass
 
     def onCancel(self,evt):
