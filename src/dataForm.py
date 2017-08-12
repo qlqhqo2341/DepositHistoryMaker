@@ -45,29 +45,30 @@ class DataForm(wx.Frame):
     def onCellChanging(self,evt):
         r,c = evt.GetRow(), evt.GetCol()
         totalR = self.sheet.GetNumberRows()
-        if c in range(3,5) and c!='' and totalR == r+1:
-            # Last Festival value is not empty
-            self.sheet.AppendRows()
-            if self.sheet.GetCellValue(totalR-1,1) != '':
-                self.sheet.SetCellValue(totalR,0,
-                    self.sheet.GetCellValue(totalR-1,0))
-                self.sheet.SetCellValue(totalR,1,
-                    self.sheet.GetCellValue(totalR-1,1))
-                self.sheet.SetGridCursor(totalR,2)
-                self.sheet.MakeCellVisible(totalR,2)
+        getValue, setValue = self.sheet.GetCellValue, self.sheet.SetCellValue
+        if c in range(3,5):
+            if totalR == r+1: # if last record, add record
+                self.sheet.AppendRows()
+            if getValue(r,1) != '': # Fest is exist
+                setValue(r+1,0,getValue(r,0)) #next copy
+                setValue(r+1,1,getValue(r,1))
+                self.sheet.SetGridCursor(r+1,2)
+                self.sheet.MakeCellVisible(r+1,2)
             else:
-                self.sheet.SetGridCursor(totalR,0)
-                self.sheet.MakeCellVisible(totalR,0)
+                self.sheet.SetGridCursor(r+1,0)
+                self.sheet.MakeCellVisible(r+1,0)
+        evt.Skip()
 
     #Widgets
     def createControl(self):
         self.sheet = gridlib.Grid(self)
-        self.sheet.CreateGrid(5 if self.flag=='add' else len(self.data), 5)
+        self.sheet.CreateGrid(13 if self.flag=='add' else len(self.data), 5)
 
         for ind,name in enumerate(['날짜','행사','내용','수입','지출']):
             self.sheet.SetColLabelValue(ind,name)
         self.sheet.SetRowLabelSize(0)
         self.sheet.DisableDragGridSize()
+        self.sheet.ShowScrollbars(True,True)
                 
         size = (100,30)
         self.okButton = wx.Button(self, label='완료', size=size)
@@ -84,7 +85,7 @@ class DataForm(wx.Frame):
             (self.okButton, 1, wx.EXPAND),
             (self.cancelButton, 1, wx.EXPAND)
         ])
-        box.AddMany([(self.sheet),(buttons,0,wx.EXPAND)])
+        box.AddMany([(self.sheet,1,wx.EXPAND),(buttons,0,wx.EXPAND)])
 
         self.SetSizerAndFit(box)
 

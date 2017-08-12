@@ -146,27 +146,28 @@ class MainForm(wx.Frame):
             if len(data) != ind+1:
                 nextKey,nextVal = data[ind+1]
                 if nowKey[0] != nextKey[0]: #Day check
-                    present.append(nowKey[0:2]+['All']+moneyStr([festGet,festPay])) \
+                    present.append(nowKey[0:2]+['총합']+moneyStr([festGet,festPay])) \
                         if festSumBool and nowKey[1] != '' else ''
-                    present.append(nowKey[0:1]+['All','All']+moneyStr([dayGet,dayPay])) if daySumBool else ''
+                    present.append(nowKey[0:1]+['총합','']+moneyStr([dayGet,dayPay])) if daySumBool else ''
                     festGet,festPay,dayGet,dayPay=0,0,0,0
                     continue
                 if nowKey[1] != nextKey[1] and nowKey[1] != '': #Fest check
-                    present.append(nowKey[0:2]+['All']+moneyStr([festGet,festPay])) if festSumBool else ''
+                    present.append(nowKey[0:2]+['총합']+moneyStr([festGet,festPay])) if festSumBool else ''
                     festGet,festPay=0,0
                     continue                
             #Last tuple
             else:
-                present.append(nowKey[0:2]+['All']+moneyStr([festGet,festPay])) \
+                present.append(nowKey[0:2]+['총합']+moneyStr([festGet,festPay])) \
                     if festSumBool and nowKey[1] != '' else ''
-                present.append([nowKey[0],'All','All']+moneyStr([dayGet,dayPay])) if daySumBool else ''
-                present.append(['All']*3+moneyStr([totalGet,totalPay])) if totalSumBool else ''
+                present.append([nowKey[0],'총합','']+moneyStr([dayGet,dayPay])) if daySumBool else ''
+                present.append(['총합','','']+moneyStr([totalGet,totalPay])) if totalSumBool else ''
 
         # present grid table by present list
         for lis in present:
             appendRow(lis)
-       
-        sheet.Fit()
+        
+        sheet.AutoSizeColumns()
+        sheet.AutoSizeRows()
         if len(store.activityData)-undoCount==0:
             # can not undo
             self.butUndo.Disable()
@@ -228,6 +229,10 @@ class MainForm(wx.Frame):
     
     def onModify(self,evt):
         pass
+
+    def onGridKeyDown(self,evt):
+        if evt.GetKeyCode() == wx.WXK_DELETE or evt.GetKeyCode() == wx.WXK_BACK:
+            pass
        
 
     #widgets
@@ -244,6 +249,7 @@ class MainForm(wx.Frame):
         self.sheet.SetRowLabelSize(0)
         self.sheet.EnableEditing(False)
         self.sheet.DisableDragGridSize()
+        self.sheet.ShowScrollbars(True,True)
 
         size = (100,35)
         self.butNew = wx.Button(self, label="새 파일", size=size)
@@ -276,7 +282,8 @@ class MainForm(wx.Frame):
             (self.butLoad, wx.EVT_BUTTON, store.dialogLoad),
             (self.butAdd, wx.EVT_BUTTON, self.onAdd),
             (self.butDel, wx.EVT_BUTTON, self.onRemove),
-            (self.butMod, wx.EVT_BUTTON, self.onModify)
+            (self.butMod, wx.EVT_BUTTON, self.onModify),
+            (self.sheet, wx.EVT_KEY_DOWN, self.onGridKeyDown)
         ]
         for control, evt, func in evts:
             control.Bind(evt,func)
@@ -288,7 +295,7 @@ class MainForm(wx.Frame):
     def doLayout(self):
         self.divider = wx.BoxSizer()
         left, right = wx.BoxSizer(orient=wx.VERTICAL), wx.BoxSizer(orient=wx.VERTICAL)
-        left.Add(self.sheet, 1)
+        left.Add(self.sheet, 1,wx.EXPAND)
         box = wx.BoxSizer()
         box.AddMany([(b,1,wx.EXPAND) for b in self.checks])
         left.Add(box, 0,flag=wx.EXPAND)
